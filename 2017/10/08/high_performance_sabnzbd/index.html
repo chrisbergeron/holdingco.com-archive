@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<!--[if IE 8]> <html lang="en" class="ie8 no-js"> <![endif]-->
+<!--[if IE 9]> <html lang="en" class="ie9 no-js"> <![endif]-->
+<!--[if !IE]><!-->
+<html lang="en">
+<!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <title>Using Ansible to build a high availablity Sabnzbd usenet downloader | The Holding Company</title>
+
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <meta name="description" content="I’m limited to about 40MB&#x2F;s on downloads on my VPC at Digital Ocean, but I run Sabnzbd for downloading large files from usenet.  It doesn’t take long to download at all, but out of curiosity I wanted">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Using Ansible to build a high availablity Sabnzbd usenet downloader">
+<meta property="og:url" content="https://holdingco.com/2017/10/08/high_performance_sabnzbd/index.html">
+<meta property="og:site_name" content="The Holding Company">
+<meta property="og:description" content="I’m limited to about 40MB&#x2F;s on downloads on my VPC at Digital Ocean, but I run Sabnzbd for downloading large files from usenet.  It doesn’t take long to download at all, but out of curiosity I wanted">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://holdingco.com/images/terraform_terminal.png">
+<meta property="og:image" content="https://holdingco.com/images/tech/terraform.png">
+<meta property="og:image" content="https://holdingco.com/images/tech/ansible.png">
+<meta property="og:image" content="https://holdingco.com/images/tech/sabnzbd.png">
+<meta property="og:image" content="https://holdingco.com/images/tech/elastic.png">
+<meta property="og:image" content="https://holdingco.com/images/tech/sonarr.png">
+<meta property="article:published_time" content="2017-10-08T16:46:25.000Z">
+<meta property="article:modified_time" content="2018-10-28T21:36:41.000Z">
+<meta property="article:author" content="Chris Bergeron">
+<meta property="article:tag" content="sabnzbd">
+<meta property="article:tag" content="usenet">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://holdingco.com/images/terraform_terminal.png">
+  
+    <link rel="alternative" href="/atom.xml" title="The Holding Company" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.ico">
+  
+    
+  <meta content="{{ title }}" name="description">
+  <meta content="{{ title }}" name="keywords">
+  <meta content="{{ title }}" name="author">
+
+  <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700|PT+Sans+Narrow|Source+Sans+Pro:200,300,400,600,700,900&amp;subset=all" rel="stylesheet" type="text/css">
+
+  <!-- Global styles START -->   
+  
+<link rel="stylesheet" href="/metronic/assets/plugins/font-awesome/css/font-awesome.min.css">
+
+  
+<link rel="stylesheet" href="/metronic/assets/plugins/bootstrap/css/bootstrap.min.css">
+
+  <!-- Global styles END --> 
+   
+  <!-- Page level plugin styles START -->
+  
+<link rel="stylesheet" href="/metronic/assets/pages/css/animate.css">
+
+  
+<link rel="stylesheet" href="/metronic/assets/plugins/owl.carousel/assets/owl.carousel.css">
+
+  <!-- Page level plugin styles END -->
+
+  <!-- Theme styles START -->
+  
+<link rel="stylesheet" href="/metronic/assets/pages/css/components.css">
+
+  
+<link rel="stylesheet" href="/metronic/assets/pages/css/slider.css">
+
+  
+<link rel="stylesheet" href="/metronic/assets/corporate/css/style.css">
+
+  
+<link rel="stylesheet" href="/metronic/assets/pages/css/portfolio.css">
+
+  
+<link rel="stylesheet" href="/metronic/assets/corporate/css/style-responsive.css">
+
+  
+<link rel="stylesheet" href="/metronic/assets/corporate/css/themes/red.css">
+
+  
+<link rel="stylesheet" href="/css/theme-styles.css">
+
+  <!-- Theme styles END -->
+<meta name="generator" content="Hexo 5.2.0"></head>
+
+<body class="corporate">
+  <!-- BEGIN TOP BAR -->
+<div class="pre-header">
+  <div class="container">
+    <div class="row">
+      <!-- BEGIN TOP BAR LEFT PART -->
+      <div class="col-md-6 col-sm-6 col-xs-9 additional-shop-info">
+	<ul class="list-unstyled list-inline">
+	  <li><i class="fa fa-phone"></i><span>716-472-4484</span></li>
+	  <li><i class="fa fa-envelope-o"></i><span>ptsteadman@gmail.com</span></li>
+	</ul>
+      </div>
+      <!-- END TOP BAR LEFT PART -->
+      <!-- BEGIN TOP BAR MENU -->
+      <div class="col-md-6 col-sm-6 col-xs-3 additional-nav">
+	<ul class="list-unstyled list-inline pull-right">
+	  <li><a href="/login">Log In</a></li>
+	</ul>
+      </div>
+      <!-- END TOP BAR MENU -->
+    </div>
+  </div>        
+</div>
+<!-- END TOP BAR -->
+<!-- BEGIN HEADER -->
+<div class="header">
+  <div class="container">
+    <!--<a class="site-logo" href="/" id="logo">The Holding Company</a>-->
+
+    <a class="site-logo" href="/">
+      <img src="/metronic/assets/corporate/img/logos/logo-corp-red.png" alt="Metronic FrontEnd">
+    </a>
+
+    <a href="javascript:void(0);" class="mobi-toggler"><i class="fa fa-bars"></i></a>
+
+    <!-- BEGIN NAVIGATION -->
+    <div class="header-navigation pull-right font-transform-inherit">
+      <ul>
+	
+	<li class="">
+	  <a  href="/">Home</a>
+	</li>
+	
+	<li class="">
+	  <a  href="/projects/">Projects</a>
+	</li>
+	
+	<li class="">
+	  <a  href="/archives/">Blog</a>
+	</li>
+	
+	<li class="">
+	  <a  href="/contact/">Contact</a>
+	</li>
+	
+	<li class="">
+	  <a  href="/about/">About</a>
+	</li>
+	
+	<!-- BEGIN TOP SEARCH -->
+	<li class="menu-search">
+	  <span class="sep"></span>
+	  <i class="fa fa-search search-btn"></i>
+	  <div class="search-box">
+	    <form action="#">
+	      <div class="input-group">
+		<input type="text" placeholder="Search" class="form-control st-default-search-input">
+		<span class="input-group-btn">
+		  <button class="btn btn-primary" type="submit">Search</button>
+		</span>
+	      </div>
+	    </form>
+	  </div> 
+	</li>
+	<!-- END TOP SEARCH -->
+      </ul>
+    </div>
+    <!-- END NAVIGATION -->
+  </div>
+</div>
+<!-- Header END -->
+
+  <div class="container">
+  <ul class="breadcrumb">
+    <li><a href="/">Home</a></li>
+    <li><a href="/archives/">Blog</a></li>
+    <li class="active">Post</li>
+  </ul>
+  <section id="main">
+    
+    <h2 itemprop="name">
+      <a class="article-title" href="/2017/10/08/high_performance_sabnzbd/">Using Ansible to build a high availablity Sabnzbd usenet downloader</a>
+    </h2>
+
+
+    <div class="row">
+<div class="col-md-9 col-sm-9 blog-posts">
+<article id="post-high_performance_sabnzbd" class="article article-type-post blog-item" itemscope itemprop="blogPost">
+  <div class="article-meta">
+  </div>
+  <div class="article-inner">
+    
+    
+    <header class="article-header">
+      <ul class="blog-info">
+	<li><i class="fa fa-user"></i> Anonymous</li>
+	<li><i class="fa fa-calendar"></i>
+	  <time datetime="2017-10-08T16:46:25.000Z" itemprop="datePublished">2017/10/08</time>
+
+	</li>
+	<li class="hidden-xs"><i class="fa fa-comments"></i>
+	  <a href="https://holdingco.com/2017/10/08/high_performance_sabnzbd/#disqus_thread" class="article-comment-link">Comments</a>
+	</li>
+	<li class="hidden-xs"><i class="fa fa-tags"></i> 
+	  
+  
+    <a href="/tags/sabnzbd/" title="sabnzbd">sabnzbd</a>,
+  
+    <a href="/tags/usenet/" title="usenet">usenet</a>
+  
+
+
+	</li>
+      </ul>
+      
+  <div class="article-category">
+    
+    Category: 
+    
+    Categories:
+    <a class="article-category-link" href="/categories/linux/">linux</a>
+  </div>
+  <br>
+
+
+    </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>I’m limited to about 40MB/s on downloads on my VPC at Digital Ocean, but I run <a target="_blank" rel="noopener" href="https://sabnzbd.org/">Sabnzbd</a> for downloading large files from usenet.  It doesn’t take long to download at all, but out of curiosity I wanted to see if I could parallelize this and download multiple files at the same.  I use Sonarr for searching usenet for freely distributable training videos which then sends them to SABnzbd for downloading.  Since Sonarr can send multiple files to sabnzbd which get queued up, I figured I can reduce the queue by downloading them at the same time.</p>
+<p>Using Ansible and Terraform (devops automation tools), I can spin up VPC on demand, provision them, configure them as sabnzbd download nodes and then destroy the instances when complete.</p>
+<p>The instances all run the same sabnzbd config and the instances use haproxy for round-robin distribution.  I will probably change this to <a target="_blank" rel="noopener" href="https://www.consul.io/">Consul</a>, but I just wanted something quick so I used a basic haproxy config.</p>
+<a id="more"></a>
+<p>Terraform builds 4 sabnzbd, 1 haproxy, and 1 ELK instance.  It configures a VIP which I point Sonarr to.  Here’s the terraform config that builds a sabnzbd server:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">resource &quot;digitalocean_droplet&quot; &quot;sab1&quot; &#123;</span><br><span class="line">    image &#x3D; &quot;centos-7-x64&quot;</span><br><span class="line">    name &#x3D; &quot;sab1&quot;</span><br><span class="line">    tags &#x3D; [&quot;sab&quot;]</span><br><span class="line">    region &#x3D; &quot;nyc1&quot;</span><br><span class="line">    size &#x3D; &quot;2gb&quot;</span><br><span class="line">    private_networking &#x3D; true</span><br><span class="line">    ssh_keys &#x3D; [</span><br><span class="line">      &quot;$&#123;var.ssh_fingerprint&#125;&quot;</span><br><span class="line">    ]</span><br><span class="line">connection &#123;</span><br><span class="line">      user &#x3D; &quot;root&quot;</span><br><span class="line">      type &#x3D; &quot;ssh&quot;</span><br><span class="line">      private_key &#x3D; &quot;$&#123;file(var.pvt_key)&#125;&quot;</span><br><span class="line">      timeout &#x3D; &quot;2m&quot;</span><br><span class="line">&#125;</span><br><span class="line">provisioner &quot;remote-exec&quot; &#123;</span><br><span class="line">    inline &#x3D; [</span><br><span class="line">      &quot;export PATH&#x3D;$PATH:&#x2F;usr&#x2F;bin&quot;,</span><br><span class="line">      &quot;sudo yum -y install epel-release&quot;</span><br><span class="line">    ]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Here is a terraform play to provision 6 new hosts (1 Elasticsearch, 1 HAproxy and 4 Sabnzbd):</p>
+<p><a target="_blank" rel="noopener" href="https://showterm.io/9b8d315c5f5cb12de7b63"><img src="/images/terraform_terminal.png" width="600" alt="Click here to watch terraform build the instances"></a></p>
+<p>Here is the ansible playbook that configuress the sabnzbd instances:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br></pre></td><td class="code"><pre><span class="line">#!&#x2F;usr&#x2F;bin&#x2F;env ansible-playbook</span><br><span class="line">---</span><br><span class="line">- hosts: all</span><br><span class="line">  gather_facts: yes</span><br><span class="line">  become: yes</span><br><span class="line"></span><br><span class="line">  tasks:</span><br><span class="line">    - name: TASK | Create usenet group</span><br><span class="line">      group:</span><br><span class="line">        name: usenet</span><br><span class="line">        state: present</span><br><span class="line"></span><br><span class="line">    - name: TASK | Create usenet user</span><br><span class="line">      user:</span><br><span class="line">        name: usenet</span><br><span class="line">        shell: &#x2F;bin&#x2F;bash</span><br><span class="line">        groups: usenet</span><br><span class="line">        append: yes</span><br><span class="line">        password: [ removed ]</span><br><span class="line">        update_password: on_create</span><br><span class="line"></span><br><span class="line">    - name: TASK | Create &#x2F;apps directory</span><br><span class="line">      file:</span><br><span class="line">        path: &#x2F;apps</span><br><span class="line">        state: directory</span><br><span class="line">        owner: usenet</span><br><span class="line">        group: usenet</span><br><span class="line">        mode: 0755</span><br><span class="line"></span><br><span class="line">    - name: TASK | Create &#x2F;apps&#x2F;data&#x2F;.sabnzbd directory</span><br><span class="line">      file:</span><br><span class="line">        path: &#x2F;apps&#x2F;data&#x2F;.sabnzbd</span><br><span class="line">        state: directory</span><br><span class="line">        owner: usenet</span><br><span class="line">        group: usenet</span><br><span class="line">        mode: 0755</span><br><span class="line"></span><br><span class="line">    - name: TASK | Install EPEL Repo</span><br><span class="line">      action: &gt;</span><br><span class="line">        yum name&#x3D;epel-release state&#x3D;present update_cache&#x3D;yes</span><br><span class="line"></span><br><span class="line">    - name: TASK | Install packages</span><br><span class="line">      action: &gt;</span><br><span class="line">        yum name&#x3D;&#123;&#123; item &#125;&#125; state&#x3D;present update_cache&#x3D;yes</span><br><span class="line">      with_items:</span><br><span class="line">        - vim</span><br><span class="line">        - git</span><br><span class="line">        - mlocate</span><br><span class="line">        - par2cmdline</span><br><span class="line">        - p7zip</span><br><span class="line">        - unzip</span><br><span class="line">        - tar</span><br><span class="line">        - gcc</span><br><span class="line">        - python-feedparser</span><br><span class="line">        - python-configobj</span><br><span class="line">        - python-cheetah</span><br><span class="line">        - python-dbus</span><br><span class="line">        - python-devel</span><br><span class="line">        - screen</span><br><span class="line">        - vim</span><br><span class="line">        - htop</span><br><span class="line">        - iftop</span><br><span class="line">        - bind-utils</span><br><span class="line">        - tree</span><br><span class="line">        - jq</span><br><span class="line">        - telnet</span><br><span class="line">        - lsof</span><br><span class="line">        - tcpdump</span><br><span class="line">        - nload</span><br><span class="line"></span><br><span class="line">    - name: TASK | Install unrar</span><br><span class="line">      yum:</span><br><span class="line">        name: ftp:&#x2F;&#x2F;rpmfind.net&#x2F;linux&#x2F;dag&#x2F;redhat&#x2F;el7&#x2F;en&#x2F;x86_64&#x2F;dag&#x2F;RPMS&#x2F;unrar-5.0.3-1.el7.rf.x86_64.rpm</span><br><span class="line">        state: present</span><br><span class="line"></span><br><span class="line">    - name: TASK | Install yenc</span><br><span class="line">      yum:</span><br><span class="line">        name: https:&#x2F;&#x2F;archives.fedoraproject.org&#x2F;pub&#x2F;archive&#x2F;fedora&#x2F;linux&#x2F;releases&#x2F;22&#x2F;Everything&#x2F;x86_64&#x2F;os&#x2F;Packages&#x2F;p&#x2F;python-yenc-0.4.0-4.fc22.x86_64.rpm</span><br><span class="line">        state: present</span><br><span class="line"></span><br><span class="line">    - name: TASK | Clone SAB repo</span><br><span class="line">      git:</span><br><span class="line">        repo: &#39;https:&#x2F;&#x2F;github.com&#x2F;sabnzbd&#x2F;sabnzbd.git&#39;</span><br><span class="line">        dest: &#x2F;apps&#x2F;sabnzbd</span><br><span class="line">        version: master</span><br><span class="line">        clone: yes</span><br><span class="line">        update: yes</span><br><span class="line"></span><br><span class="line">    - name: TASK | Change owner of SAB to usenet</span><br><span class="line">      file:</span><br><span class="line">        path: &#x2F;apps</span><br><span class="line">        state: directory</span><br><span class="line">        owner: usenet</span><br><span class="line">        group: usenet</span><br><span class="line">        mode: 0755</span><br><span class="line"></span><br><span class="line">    - name: TASK | Install systemd unit file for SAB</span><br><span class="line">      template: src&#x3D;&quot;templates&#x2F;sabnzbd.service.j2&quot; dest&#x3D;&quot;&#x2F;etc&#x2F;systemd&#x2F;system&#x2F;sabnzbd.service&quot; mode&#x3D;0644</span><br><span class="line"></span><br><span class="line">    - name: TASK | Copy SAB config</span><br><span class="line">      template: src&#x3D;&quot;templates&#x2F;sabnzbd_config.ini.j2&quot; dest&#x3D;&quot;&#x2F;apps&#x2F;data&#x2F;.sabnzbd&#x2F;sabnzbd_config.ini&quot; mode&#x3D;0644</span><br><span class="line"></span><br><span class="line">    - name: TASK | Enable and start SAB service</span><br><span class="line">      systemd:</span><br><span class="line">        name: sabnzbd</span><br><span class="line">        enabled: yes</span><br><span class="line">        state: started</span><br><span class="line"></span><br><span class="line">    - name: TASK | Install filebeat</span><br><span class="line">      yum:</span><br><span class="line">        name: https:&#x2F;&#x2F;artifacts.elastic.co&#x2F;downloads&#x2F;beats&#x2F;filebeat&#x2F;filebeat-5.6.2-x86_64.rpm</span><br><span class="line">        state: present</span><br><span class="line">        update_cache: yes</span><br><span class="line"></span><br><span class="line">    - name: TASK | Copy filebeat config file</span><br><span class="line">      template: src&#x3D;&quot;templates&#x2F;filebeat.yml.j2&quot; dest&#x3D;&quot;&#x2F;etc&#x2F;filebeat&#x2F;filebeat.yml&quot; mode&#x3D;0644</span><br><span class="line"></span><br><span class="line">    - name: TASK | Enable and start filebeat</span><br><span class="line">      systemd:</span><br><span class="line">        name: filebeat</span><br><span class="line">        enabled: yes</span><br><span class="line">        state: restarted</span><br><span class="line"></span><br><span class="line">    - name: TASK | Start updatedb for locate</span><br><span class="line">      shell: &quot;updatedb &gt;&#x2F;dev&#x2F;null 2&gt;&amp;1 &amp;&quot;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Technology-used"><a href="#Technology-used" class="headerlink" title="Technology used:"></a>Technology used:</h3><table><tr><td><a target="_blank" rel="noopener" href="https://terraform.io"><img src="/images/tech/terraform.png" width="80" height="80" alt="Terraform"></a></td><td><a target="_blank" rel="noopener" href="https://www.ansible.com"><img src="/images/tech/ansible.png" width="80" height="80" alt="Ansible"></a></td><td><a target="_blank" rel="noopener" href="https://sabnzbd.org"><img src="/images/tech/sabnzbd.png" width="80" height="80" alt="Sabnzbd"></a></td><td><a target="_blank" rel="noopener" href="https://www.elastic.co/"><img src="/images/tech/elastic.png" width="80" height="80" alt="Elasticsearch"></a></td><td><a target="_blank" rel="noopener" href="https://sonarr.tv/"><img src="/images/tech/sonarr.png" width="80" height="80" alt="Sonarr"></a></td></tr></table>
+
+      
+    </div>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/10/08/grafana_dashboard/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          Building an executive dashboard with Grafana
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/10/07/sysinfo/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">System info bash script</div>
+    </a>
+  
+</nav>
+
+  
+  <br>
+</article>
+
+
+
+
+</div>
+<div class="col-md-3 col-sm-3 blog-sidebar">
+  <!-- CATEGORIES START -->
+<h2 class="no-top-space">Categories</h2>
+
+<div class="widget-wrap">
+  <div class="widget">
+    <ul class="nav sidebar-categories margin-bottom-40">
+      
+	<li>
+	  <a href="/categories/Projects/">Projects (3)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/alternate-energy/">alternate energy (2)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/linux/">linux (11)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/carputer/">carputer (3)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/grafana/">grafana (1)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/dashboards/">dashboards (5)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/homelab/">homelab (3)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/blog/">blog (2)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/politics/">politics (1)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/Professional/">Professional (1)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/usenet/">usenet (2)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/networking/">networking (1)</a>
+	</li>
+      
+	<li>
+	  <a href="/categories/devops/">devops (1)</a>
+	</li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<!-- CATEGORIES END -->
+
+<!-- BEGIN BLOG TAGS -->
+<div class="blog-tags margin-bottom-20">
+  <h2>Tags</h2>
+  
+  <div class="widget-wrap">
+    <div class="widget">
+      
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/4G/" rel="tag"><i class='fa fa-tags'></i>4G</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LTE/" rel="tag"><i class='fa fa-tags'></i>LTE</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/alexa/" rel="tag"><i class='fa fa-tags'></i>alexa</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/aluminum/" rel="tag"><i class='fa fa-tags'></i>aluminum</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/annotations/" rel="tag"><i class='fa fa-tags'></i>annotations</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ansible/" rel="tag"><i class='fa fa-tags'></i>ansible</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/aspire/" rel="tag"><i class='fa fa-tags'></i>aspire</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/bash/" rel="tag"><i class='fa fa-tags'></i>bash</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/carputer/" rel="tag"><i class='fa fa-tags'></i>carputer</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cloudinary/" rel="tag"><i class='fa fa-tags'></i>cloudinary</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/comma-ai/" rel="tag"><i class='fa fa-tags'></i>comma.ai</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/curl/" rel="tag"><i class='fa fa-tags'></i>curl</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/das/" rel="tag"><i class='fa fa-tags'></i>das</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dashboard/" rel="tag"><i class='fa fa-tags'></i>dashboard</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dashboard-linux/" rel="tag"><i class='fa fa-tags'></i>dashboard linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dashpc/" rel="tag"><i class='fa fa-tags'></i>dashpc</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dashwerks/" rel="tag"><i class='fa fa-tags'></i>dashwerks</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dell/" rel="tag"><i class='fa fa-tags'></i>dell</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/deluge/" rel="tag"><i class='fa fa-tags'></i>deluge</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/democrats-republicans/" rel="tag"><i class='fa fa-tags'></i>democrats, republicans</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/devops/" rel="tag"><i class='fa fa-tags'></i>devops</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/digital-ocean/" rel="tag"><i class='fa fa-tags'></i>digital ocean</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dns/" rel="tag"><i class='fa fa-tags'></i>dns</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dnsmasq/" rel="tag"><i class='fa fa-tags'></i>dnsmasq</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/elasticsearch/" rel="tag"><i class='fa fa-tags'></i>elasticsearch</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ethanol/" rel="tag"><i class='fa fa-tags'></i>ethanol</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/fuel/" rel="tag"><i class='fa fa-tags'></i>fuel</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/furnace/" rel="tag"><i class='fa fa-tags'></i>furnace</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/generator/" rel="tag"><i class='fa fa-tags'></i>generator</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/grafana/" rel="tag"><i class='fa fa-tags'></i>grafana</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag"><i class='fa fa-tags'></i>hexo</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/home-improvement/" rel="tag"><i class='fa fa-tags'></i>home improvement</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hypermiling/" rel="tag"><i class='fa fa-tags'></i>hypermiling</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/influxdb/" rel="tag"><i class='fa fa-tags'></i>influxdb</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag"><i class='fa fa-tags'></i>interview</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/inxi/" rel="tag"><i class='fa fa-tags'></i>inxi</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ios/" rel="tag"><i class='fa fa-tags'></i>ios</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/iphone/" rel="tag"><i class='fa fa-tags'></i>iphone</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ipmi/" rel="tag"><i class='fa fa-tags'></i>ipmi</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kibana/" rel="tag"><i class='fa fa-tags'></i>kibana</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag"><i class='fa fa-tags'></i>linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mariadb/" rel="tag"><i class='fa fa-tags'></i>mariadb</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/metalcasting/" rel="tag"><i class='fa fa-tags'></i>metalcasting</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/monitorr/" rel="tag"><i class='fa fa-tags'></i>monitorr</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag"><i class='fa fa-tags'></i>mysql</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nas/" rel="tag"><i class='fa fa-tags'></i>nas</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/netgear/" rel="tag"><i class='fa fa-tags'></i>netgear</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/nzbget/" rel="tag"><i class='fa fa-tags'></i>nzbget</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/panda/" rel="tag"><i class='fa fa-tags'></i>panda</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pfsense/" rel="tag"><i class='fa fa-tags'></i>pfsense</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/php/" rel="tag"><i class='fa fa-tags'></i>php</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pihole/" rel="tag"><i class='fa fa-tags'></i>pihole</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/plex/" rel="tag"><i class='fa fa-tags'></i>plex</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/prometheus/" rel="tag"><i class='fa fa-tags'></i>prometheus</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/r710/" rel="tag"><i class='fa fa-tags'></i>r710</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/raspberry-pi/" rel="tag"><i class='fa fa-tags'></i>raspberry pi</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sabnzbd/" rel="tag"><i class='fa fa-tags'></i>sabnzbd</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/sas/" rel="tag"><i class='fa fa-tags'></i>sas</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/showterm/" rel="tag"><i class='fa fa-tags'></i>showterm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/supermicro/" rel="tag"><i class='fa fa-tags'></i>supermicro</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemd/" rel="tag"><i class='fa fa-tags'></i>systemd</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/telegraf/" rel="tag"><i class='fa fa-tags'></i>telegraf</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/telematics/" rel="tag"><i class='fa fa-tags'></i>telematics</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/usenet/" rel="tag"><i class='fa fa-tags'></i>usenet</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webhooks/" rel="tag"><i class='fa fa-tags'></i>webhooks</a></li></ul>
+    </div>
+  </div>
+
+
+</div>
+<!-- END BLOG TAGS -->
+
+
+<!-- BEGIN FEATURED POSTS -->                            
+<h2>Featured Posts</h2>
+<div class="recent-news margin-bottom-10">
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+    
+  
+</div>
+<!-- END FEATURED POSTS -->                            
+
+</div>
+</div>
+
+  </section>
+</div>
+
+    <!-- BEGIN PRE-FOOTER -->
+    <div class="pre-footer">
+      <div class="container">
+        <div class="row">
+          <!-- BEGIN BOTTOM ABOUT BLOCK -->
+          <div class="col-md-4 col-sm-6 pre-footer-col">
+            <h2>About Us</h2>
+            <p>Computer Lab is a software development and marketing company based in Brooklyn, New York. <br><br> Computer Lab was founded in 2015, and is focused on so on and so forth.</p>
+          </div>
+          <!-- END BOTTOM ABOUT BLOCK -->
+
+          <!-- BEGIN BOTTOM CONTACTS -->
+          <div class="col-md-4 col-sm-6 pre-footer-col">
+            <h2>Contact</h2>
+            <address class="margin-bottom-40">
+              140 Metropolitan Avenue<br>
+              5th Floor<br>
+              Brooklyn, NY 11249<br>
+              Phone: 716-472-4484<br>
+              Email: <a href="mailto:ptsteadman@gmail.com">ptsteadman@gmail.com</a><br>
+            </address>
+          </div>
+          <!-- END BOTTOM CONTACTS -->
+
+	
+          <!-- BEGIN TWITTER BLOCK --> 
+          <div class="col-md-4 col-sm-6 pre-footer-col">
+
+	  <a data-tweet-limit="1" class="twitter-timeline"
+	  target="_blank" rel="noopener" href="https://twitter.com/computerlab_"
+	  data-widget-id="678830341331820544">Tweets by @computerlab_</a>
+
+	  <script>!function(d,s,id){var
+	  js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+
+          </div>
+          <!-- END TWITTER BLOCK -->
+	
+        </div>
+      </div>
+    </div>
+    <!-- END PRE-FOOTER -->
+
+    <!-- BEGIN FOOTER -->
+    <div class="footer">
+      <div class="container">
+        <div class="row">
+          <!-- BEGIN COPYRIGHT -->
+          <div class="col-md-6 col-sm-6 padding-top-10">
+                  &copy; 2020 The Holding Company<br>
+ <a href="javascript:;">Privacy Policy</a> | <a href="javascript:;">Terms of Service</a>
+          </div>
+          <!-- END COPYRIGHT -->
+	  <!-- BEGIN SOCIAL -->
+<div class="col-md-6 col-sm-6">
+  <ul class="social-footer list-unstyled list-inline pull-right">
+    
+      <li><a target="_blank" rel="noopener" href="https://github.com/ptsteadman"><i class="fa fa-github"></i></a></li>
+    
+      <li><a target="_blank" rel="noopener" href="https://twitter.com/ptsteadman"><i class="fa fa-twitter"></i></a></li>
+    
+      <li><a target="_blank" rel="noopener" href="https://www.facebook.com/ptsteadman"><i class="fa fa-facebook"></i></a></li>
+    
+      <li><a href="/atom.xml"><i class="fa fa-rss"></i></a></li>
+    
+      <li><a target="_blank" rel="noopener" href="https://linkedin.com/in/ptsteadman"><i class="fa fa-linkedin"></i></a></li>
+    
+      <li><a target="_blank" rel="noopener" href="http://stackoverflow.com/users/2480493/patrick-steadman"><i class="fa fa-stackoverflow"></i></a></li>
+    
+  </ul>  
+</div>
+<!-- END SOCIAL -->
+
+        </div>
+      </div>
+    </div>
+    <!-- END FOOTER -->
+
+  <!-- BEGIN CORE PLUGINS (REQUIRED FOR ALL PAGES) -->
+<!--[if lt IE 9]>
+
+<script src="/metronic/assets/plugins/respond.min.js"></script>
+
+<![endif]--> 
+
+<script src="/metronic/assets/plugins/jquery.min.js"></script>
+
+
+<script src="/metronic/assets/plugins/jquery-migrate.min.js"></script>
+
+
+<script src="/metronic/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+
+
+<script src="/metronic/assets/corporate/scripts/back-to-top.js"></script>
+
+
+<script src="/metronic/assets/plugins/owl.carousel/owl.carousel.min.js"></script>
+
+
+<script src="/metronic/assets/corporate/scripts/layout.js"></script>
+
+
+<script src="/js/wow.min.js"></script>
+
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+<script type="text/javascript">
+    jQuery(document).ready(function() {
+        Layout.init();    
+        Layout.initOWL();
+        Layout.initTwitter();
+        Layout.initFixHeaderWithPreHeader(); /* Switch On Header Fixing (only if you have pre-header) */
+        Layout.initNavScrolling(); 
+	new WOW().init();
+    });
+</script>
+<!-- END CORE PLUGINS -->
+
+<!-- BEGIN PAGE-SPECIFIC PLUGINS --> 
+
+
+
+
+
+
+
+<!-- END PAGE-SPECIFIC PLUGINS --> 
+
+<!-- BEGIN INTEGRATIONS -->
+
+
+
+
+
+<!-- END INTEGRATIONS -->
+
+</body>
+</html>

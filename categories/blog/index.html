@@ -229,7 +229,7 @@
   
     
     <h2 itemprop="name">
-      <a class="archive-article-title" href="/2017/10/07/nzbget_systemd_unit_file/">A systemD unit file for Hexo</a>
+      <a class="archive-article-title" href="/2017/10/07/nzbget_systemd_unit_file/">A systemd unit file for Nzbget</a>
     </h2>
 
 
@@ -248,7 +248,7 @@
   
     <a href="/tags/systemd/" title="systemd">systemd</a>,
   
-    <a href="/tags/hexo/" title="hexo">hexo</a>
+    <a href="/tags/nzbget/" title="nzbget">nzbget</a>
   
 
 
@@ -256,14 +256,7 @@
     </ul>
     <div class="blog-item">
       
-	<p><a target="_blank" rel="noopener" href="https://nzbget.net/">Nzbget</a> is a very fast Usenet downloader.  It didn’t include a SystemD Unit file, so I created one:</p>
-<h2 id="Nzbget-SystemD-Unit-File"><a href="#Nzbget-SystemD-Unit-File" class="headerlink" title="Nzbget SystemD Unit File"></a>Nzbget SystemD Unit File</h2><h3 id="lib-system-systemd-hexo-service"><a href="#lib-system-systemd-hexo-service" class="headerlink" title="/lib/system/systemd/hexo.service"></a>/lib/system/systemd/hexo.service</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[Service]</span><br><span class="line">WorkingDirectory=/home/[yourdirectory]/blog</span><br><span class="line">ExecStart=/bin/hexo server -p80</span><br><span class="line">Restart=always</span><br><span class="line">StandardOutput=syslog</span><br><span class="line">StandardError=syslog</span><br><span class="line">SyslogIdentifier=hexo</span><br><span class="line">User=root</span><br><span class="line">Group=root</span><br><span class="line">Environment=NODE_ENV=production</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
-<p>Obviously, you’ll want to replace [yourdirectory] with the location of your Hexo blog.</p>
-<h3 id="Start-Hexo"><a href="#Start-Hexo" class="headerlink" title="Start Hexo"></a>Start Hexo</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ sudo systemctl start hexo</span><br></pre></td></tr></table></figure>
-
-<h3 id="View-status-of-Hexo"><a href="#View-status-of-Hexo" class="headerlink" title="View status of Hexo"></a>View status of Hexo</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ sudo systemctl status hexo</span><br><span class="line">● hexo.service</span><br><span class="line">   Loaded: loaded (/usr/lib/systemd/system/hexo.service; disabled; vendor preset: disabled)</span><br><span class="line">   Active: active (running) since Sat 2017-10-07 02:27:36 UTC; 7min ago</span><br><span class="line"> Main PID: 8997 (hexo)</span><br><span class="line">   CGroup: /system.slice/hexo.service</span><br><span class="line">           └─8997 hexo</span><br><span class="line"></span><br><span class="line">Oct 07 02:27:36 centos-2gb-nyc1-01 systemd[1]: Started nzbget.service.</span><br><span class="line">Oct 07 02:27:36 centos-2gb-nyc1-01 systemd[1]: Starting nzbget.service...</span><br><span class="line">Oct 07 02:27:38 centos-2gb-nyc1-01 hexo[8997]: INFO  Start processing</span><br><span class="line">Oct 07 02:27:38 centos-2gb-nyc1-01 hexo[8997]: INFO  Hexo is running at http://localhost:80/. Press Ctrl+C to stop.</span><br></pre></td></tr></table></figure>
-<p>I recommend <a target="_blank" rel="noopener" href="https://m.do.co/c/efe82c337904">Digital Ocean</a> for great cloud hosting.</p>
-
+	This text will appear by the thumbnail in the blog page.
       
     </div>
     <br>
@@ -305,7 +298,7 @@
             <h2>Contact</h2>
             <address class="margin-bottom-40">
               123 Sessame St<br>
-              5th Floor<br>
+              <br>
               Brooklyn, NY 11249<br>
               Phone: 716-472-4484<br>
               Email: <a href="mailto:holdingco@chrisbergeron.com">holdingco@chrisbergeron.com</a><br>
